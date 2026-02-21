@@ -1,20 +1,22 @@
 <div align="center">
-  <img src="assets/no bg/logo without background.png" alt="Fast Eat Logo" width="100" height="100"/>
+  <img src="assets\banner.png" alt="Fast Eat Logo" width="400" height="104"/>
   <h1>Fast Eat</h1>
   <p><i>Architecture & API Specification</i></p>
 </div>
 
 ---
 
-Fast Eat is a food ordering platform with live drone delivery tracking. Originally developed as a university project with a professor-provided backend API, this repository documents the reimplementation of that closed API using enterprise-grade Spring Boot architecture.
+Fast Eat is a food ordering platform with live drone delivery tracking. Originally developed as a university project with a professor-provided backend API, this repository documents the reimplementation of that closed API using enterprise-grade Spring Boot.
 
-**Quick Navigation:** [Spring Boot Backend](https://github.com/gerolori/fast-eat-backend-springboot) • [React Native App](https://github.com/gerolori/fast-eat-rn) • [Kotlin Android App](https://github.com/gerolori/fast-eat-k) • [API Spec](api/openapi.yaml)
+**Quick Navigation:** [Spring Boot Backend](https://github.com/gerolori/fast-eat-backend-springboot) • [React Native App](https://github.com/gerolori/fast-eat-react-native) • [Kotlin Android App](https://github.com/gerolori/fast-eat-kotlin) • [Architecture](https://github.com/gerolori/fast-eat-architecture) • [API Spec](api/openapi.yaml)
 
 ---
 
-### App Showcase
+### Apps Showcase
 
-<table>
+WIP
+
+<!-- <table>
   <tr>
     <td align="center">
       <img src="assets/screenshots/menu-list.png" alt="Menu List" width="220"/><br/>
@@ -43,9 +45,7 @@ Fast Eat is a food ordering platform with live drone delivery tracking. Original
       <sub>Swagger Docs</sub>
     </td>
   </tr>
-</table>
-
-> *Screenshots to be added*
+</table> -->
 
 ---
 
@@ -76,7 +76,6 @@ Fast Eat is a food ordering platform with live drone delivery tracking. Original
 - [Connection to Thesis Work](#connection-to-thesis-work)
   - [Shared Architectural Patterns](#shared-architectural-patterns)
   - [Technology Continuity](#technology-continuity)
-  - [Key Differences](#key-differences)
 - [Future Backend Implementations](#future-backend-implementations)
   - [NestJS (TypeScript)](#nestjs-typescript)
   - [FastAPI (Python + MongoDB)](#fastapi-python--mongodb)
@@ -84,8 +83,6 @@ Fast Eat is a food ordering platform with live drone delivery tracking. Original
   - [Visual Design Approach](#visual-design-approach)
     - [Color System (Centralized Variables)](#color-system-centralized-variables)
   - [Client-Specific Aesthetic Choices](#client-specific-aesthetic-choices)
-    - [React Native (Cross-Platform iOS/Android)](#react-native-cross-platform-iosandroid)
-    - [Kotlin Android (Native)](#kotlin-android-native)
   - [Backend Architectural Consistency](#backend-architectural-consistency)
 - [License](#license)
 
@@ -142,8 +139,8 @@ The backend implementation uses Spring Boot with patterns and practices mirrorin
 
 | Platform            | Technology                  | Status      |
 | ------------------- | --------------------------- | ----------- |
-| React Native        | Expo 52, React Native 0.76  |  Complete   |
 | Kotlin Android      | Native Android              |  Complete   |
+| React Native        | Expo 52, React Native 0.76  |  Complete   |
 
 ---
 
@@ -152,8 +149,8 @@ The backend implementation uses Spring Boot with patterns and practices mirrorin
 ```mermaid
 graph TB
     subgraph "Mobile Clients"
-        RN[React Native App<br/>Expo 52]
         KT[Kotlin Android App<br/>Native Android]
+        RN[React Native App<br/>Expo 52]
     end
     
     subgraph "Backend API"
@@ -191,11 +188,11 @@ System Components:
 
 ## Related Repositories
 
-| Repository                      | Status            | Description                            | Link                    |
-| ------------------------------- | ----------------- | -------------------------------------- | ----------------------- |
-| fast-eat-backend-springboot     |  In Development   | Spring Boot backend implementation     | *Coming soon*           |
-| fast-eat-rn                     |  Complete         | React Native mobile app (Expo)         | *Link to be added*      |
-| fast-eat-kotlin                 |  Complete         | Kotlin Android mobile app              | *Link to be added*      |
+| Repository | Status | Description |
+| --- | --- | --- |
+| [fast-eat-backend-springboot](https://github.com/gerolori/fast-eat-backend-springboot) | In Development | Spring Boot backend implementation |
+| [fast-eat-kotlin](https://github.com/gerolori/fast-eat-kotlin) | Complete | Kotlin Android mobile app |
+| [fast-eat-react-native](https://github.com/gerolori/fast-eat-react-native) | Complete | React Native mobile app (Expo) |
 
 See the [Spring Boot backend repository](https://github.com/gerolori/fast-eat-backend-springboot) for complete setup instructions and deployment guides.
 
@@ -244,21 +241,8 @@ The complete API contract is defined in OpenAPI 3.0.3 format:
 
 ### Viewing the API Documentation
 
-Option 1: Online (Swagger Editor)
-
 1. Copy the content of [api/openapi.yaml](api/openapi.yaml)
 2. Paste into [Swagger Editor](https://editor.swagger.io)
-3. Interactive documentation with "Try it out" functionality
-
-Option 2: Local (when Spring Boot is running)
-
-- Swagger UI: `http://localhost:8080/swagger-ui.html`
-- OpenAPI JSON: `http://localhost:8080/v3/api-docs`
-
-Option 3: VS Code Extension
-
-- Install "OpenAPI (Swagger) Editor" by 42Crunch
-- Right-click `openapi.yaml` → Preview
 
 ---
 
@@ -290,23 +274,11 @@ This project applies patterns and technologies from my thesis project, a Human R
 - Docker containerization with health checks
 - JUnit 5 + Mockito for testing
 
-### Key Differences
-
-While maintaining the same foundational architecture, this project adapts to a different domain:
-
-- Domain: HR management → Food ordering & delivery
-- Real-time Requirements: Periodic employee updates → Live drone tracking (5-second polling)
-- State Machines: Employee hiring workflow → Order status transitions
-- Geospatial Features: None → Location-based menu filtering with coordinates
-- Image Handling: File attachments → Base64 menu images with caching
-
-The backend implementation serves as both a functional replacement for the closed university API and a portfolio piece demonstrating enterprise-grade Java development with consistent architectural practices.
-
 ---
 
 ## Future Backend Implementations
 
-While the current implementation focuses on Spring Boot, future exploration of alternative backend technologies could demonstrate polyglot development capabilities:
+While the current implementation focuses on Spring Boot, I would like to explore other languages/stacks to implement the same API specs:
 
 ### NestJS (TypeScript)
 
@@ -363,32 +335,7 @@ val MainDark = Color(0xFF0A5C53)
 
 ### Client-Specific Aesthetic Choices
 
-#### React Native (Cross-Platform iOS/Android)
-
-- Design System: Custom component library with Material Design influences
-- Layout Pattern: Card-based UI with 8dp rounded corners and subtle elevation shadows
-- Navigation: Bottom tab bar (Menu/Order/Profile) with teal icon tinting on active state
-- Typography: System fonts (San Francisco on iOS, Roboto on Android) with 16sp base size
-- Buttons: Rounded pill shape (borderRadius: 25) with teal background and white text
-- Forms: Outlined inputs with icon prefixes and inline validation feedback
-
-#### Kotlin Android (Native)
-
-- Design System: Jetpack Compose Material Design 3 components
-- Layout Pattern: Composable-based Surface cards following Material3 elevation system
-- Navigation: Material3 NavigationBar with vector drawable icons and ripple effects
-- Typography: Material3 typography scale (headlineLarge, bodyMedium, labelSmall)
-- Buttons: Material3 Button and FloatingActionButton components with teal theming
-- Forms: OutlinedTextField with Material3 label animations and error states
-
-**Shared UI Principles:**
-
-- 8dp spacing grid for consistent margins and padding throughout all screens
-- 16dp horizontal padding standard for screen edges
-- Card-based content grouping with consistent corner radius (8dp)
-- Location-aware menu cards with horizontal layout (image left, text center, price right)
-- Bottom action bars for primary screen actions (Buy, Save, Confirm)
-- Real-time status updates with visual loading indicators and refresh mechanisms
+While both mobile clients share the same teal color palette and Material Design 3 foundation, each platform implements these principles through its native ecosystem with subtle differences in execution. The React Native implementation biluds a custom component library with card-based layouts featuring 8dp rounded corners, a bottom tab bar with teal icon tinting, and rounded pill-shaped buttons (borderRadius: 25), relying on system fonts that adapt between San Francisco on iOS and Roboto on Android. The Kotlin Android application embraces Jetpack Compose and the complete Material Design 3 component system more directly, using composable Surface cards with Material3's elevation system, NavigationBar components with vector drawable icons and ripple effects, and the full Material3 typography scale (headlineLarge, bodyMedium, labelSmall). Despite these platform-specific implementations, both applications converge on shared UI principles: an 8dp spacing grid with 16dp horizontal padding standards, card-based content grouping with consistent corner radii, location-aware menu cards with horizontal layouts (image left, text center, price right), bottom action bars for primary interactions, and real-time status updates with visual loading indicators.
 
 ### Backend Architectural Consistency
 
@@ -413,13 +360,3 @@ This project is for educational and portfolio purposes.
 - All data (menus, restaurants, user information, payment cards) is fictional
 - No real payment processing is implemented (simulated validation only)
 - Original course API design by the professor; implementation is independent
-
----
-
-**Author:** Lorenzo Gerosa  
-**University:** Università degli Studi di Milano  
-**Course:** Mobile Computing 2024/25  
-
----
-
-**Last Updated:** February 2026
