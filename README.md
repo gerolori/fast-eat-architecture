@@ -1,5 +1,5 @@
 <div align="center">
-  <img src="assets/no bg/logo.png" alt="Fast Eat Logo" width="100" height="100"/>
+  <img src="assets/no bg/logo without background.png" alt="Fast Eat Logo" width="100" height="100"/>
   <h1>Fast Eat</h1>
   <p><i>Architecture & API Specification</i></p>
 </div>
