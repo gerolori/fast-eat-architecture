@@ -1,5 +1,5 @@
 <div align="center">
-  <img src="assets/banner.png" alt="Fast Eat Logo" width="400" height="104"/>
+  <img width="2000" height="516" alt="Image" src="https://github.com/user-attachments/assets/06b824b2-0437-4f83-89b9-bf7ab3d69bac" />
   <h1>Fast Eat</h1>
   <p><i>Architecture & API Specification</i></p>
 </div>
