@@ -1,0 +1,783 @@
+openapi: 3.0.3
+info:
+  title: Fast Eat API
+  version: 1.0.0
+  description: |
+    Food ordering and delivery tracking API for mobile applications.
+    
+    This specification defines the contract for the Fast Eat backend API, 
+    implemented in three different technology stacks:
+    - Spring Boot (Java 17 + PostgreSQL)
+    - NestJS (TypeScript + PostgreSQL)
+    - FastAPI (Python + MongoDB)
+    
+  contact:
+    name: Fast Eat Project
+    url: https://github.com/{username}/fast-eat-architecture
+  license:
+    name: Educational Use Only
+
+servers:
+  - url: http://localhost:8080/api/v1
+    description: Spring Boot Backend (Java)
+    
+security:
+  - bearerAuth: []
+
+tags:
+  - name: Authentication
+    description: User registration and login operations
+  - name: Users
+    description: User profile management
+  - name: Menus
+    description: Menu browsing and details
+  - name: Orders
+    description: Order placement and tracking
+
+paths:
+  /auth/register:
+    post:
+      tags: [Authentication]
+      summary: Register new user
+      description: Create a new user account with profile and payment card information
+      security: []  # Public endpoint
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegisterRequest'
+            example:
+              email: "john.doe@example.com"
+              password: "SecurePass123!"
+              firstName: "John"
+              lastName: "Doe"
+              cardFullName: "John Doe"
+              cardNumber: "1234567890123456"
+              cardExpireMonth: 12
+              cardExpireYear: 2026
+              cardCVV: "123"
+      responses:
+        '201':
+          description: User registered successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '409':
+          $ref: '#/components/responses/Conflict'
+
+  /auth/login:
+    post:
+      tags: [Authentication]
+      summary: User login
+      description: Authenticate user and receive JWT tokens
+      security: []  # Public endpoint
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+            example:
+              email: "john.doe@example.com"
+              password: "SecurePass123!"
+      responses:
+        '200':
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /auth/refresh:
+    post:
+      tags: [Authentication]
+      summary: Refresh access token
+      description: Get a new access token using refresh token
+      security: []  # Uses refresh token instead
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RefreshRequest'
+            example:
+              refreshToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+      responses:
+        '200':
+          description: Token refreshed successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TokenResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /users/me:
+    get:
+      tags: [Users]
+      summary: Get current user profile
+      description: Retrieve authenticated user's profile information
+      responses:
+        '200':
+          description: User profile retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+    put:
+      tags: [Users]
+      summary: Update current user profile
+      description: Update authenticated user's profile and payment information
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateUserRequest'
+            example:
+              firstName: "John"
+              lastName: "Smith"
+              cardFullName: "John Smith"
+              cardNumber: "1234567890123456"
+              cardExpireMonth: 6
+              cardExpireYear: 2027
+              cardCVV: "456"
+      responses:
+        '200':
+          description: Profile updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /menus:
+    get:
+      tags: [Menus]
+      summary: Get available menus
+      description: Get list of menus available for delivery at the specified location
+      parameters:
+        - name: lat
+          in: query
+          required: true
+          schema:
+            type: number
+            format: double
+            minimum: -90
+            maximum: 90
+          description: Latitude of delivery location
+          example: 45.4642
+        - name: lng
+          in: query
+          required: true
+          schema:
+            type: number
+            format: double
+            minimum: -180
+            maximum: 180
+          description: Longitude of delivery location
+          example: 9.1900
+      responses:
+        '200':
+          description: Menus retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/MenuSummary'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /menus/{menuId}:
+    get:
+      tags: [Menus]
+      summary: Get menu details
+      description: Get detailed information about a specific menu including long description
+      parameters:
+        - name: menuId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Menu ID
+      responses:
+        '200':
+          description: Menu details retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Menu'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /menus/{menuId}/ingredients:
+    get:
+      tags: [Menus]
+      summary: Get menu ingredients
+      description: Get list of ingredients for a specific menu
+      parameters:
+        - name: menuId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Menu ID
+      responses:
+        '200':
+          description: Ingredients retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Ingredient'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /menus/{menuId}/image:
+    get:
+      tags: [Menus]
+      summary: Get menu image
+      description: Get menu image in base64 format with version information for caching
+      parameters:
+        - name: menuId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Menu ID
+      responses:
+        '200':
+          description: Image retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MenuImage'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /orders:
+    post:
+      tags: [Orders]
+      summary: Create new order
+      description: |
+        Place a new order for a menu. Requires complete user profile.
+        Only one active order allowed at a time.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateOrderRequest'
+            example:
+              menuId: "123e4567-e89b-12d3-a456-426614174000"
+              deliveryLocation:
+                lat: 45.4642
+                lng: 9.1900
+      responses:
+        '201':
+          description: Order created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Order'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '402':
+          $ref: '#/components/responses/PaymentRequired'
+        '409':
+          $ref: '#/components/responses/Conflict'
+
+  /orders/{orderId}:
+    get:
+      tags: [Orders]
+      summary: Get order status
+      description: Get current status and tracking information for an order
+      parameters:
+        - name: orderId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Order ID
+      responses:
+        '200':
+          description: Order retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Order'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /orders/history:
+    get:
+      tags: [Orders]
+      summary: Get order history
+      description: Get list of user's completed orders
+      responses:
+        '200':
+          description: Order history retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Order'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: JWT token obtained from /auth/login or /auth/register
+
+  schemas:
+    # Request schemas
+    RegisterRequest:
+      type: object
+      required:
+        - email
+        - password
+        - firstName
+        - lastName
+        - cardFullName
+        - cardNumber
+        - cardExpireMonth
+        - cardExpireYear
+        - cardCVV
+      properties:
+        email:
+          type: string
+          format: email
+          description: User email address (unique)
+        password:
+          type: string
+          minLength: 8
+          description: User password (min 8 characters)
+        firstName:
+          type: string
+          maxLength: 15
+          pattern: '^[a-zA-Z\s]+$'
+          description: First name (letters and spaces only)
+        lastName:
+          type: string
+          maxLength: 15
+          pattern: '^[a-zA-Z\s]+$'
+          description: Last name (letters and spaces only)
+        cardFullName:
+          type: string
+          maxLength: 31
+          pattern: '^[a-zA-Z\s]+$'
+          description: Full name as appears on credit card
+        cardNumber:
+          type: string
+          pattern: '^\d{16}$'
+          description: 16-digit credit card number
+        cardExpireMonth:
+          type: integer
+          minimum: 1
+          maximum: 12
+          description: Card expiration month (1-12)
+        cardExpireYear:
+          type: integer
+          minimum: 2024
+          description: Card expiration year (4 digits)
+        cardCVV:
+          type: string
+          pattern: '^\d{3}$'
+          description: 3-digit CVV code
+
+    LoginRequest:
+      type: object
+      required:
+        - email
+        - password
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+
+    RefreshRequest:
+      type: object
+      required:
+        - refreshToken
+      properties:
+        refreshToken:
+          type: string
+          description: Refresh token obtained from login/register
+
+    UpdateUserRequest:
+      type: object
+      properties:
+        firstName:
+          type: string
+          maxLength: 15
+          pattern: '^[a-zA-Z\s]+$'
+        lastName:
+          type: string
+          maxLength: 15
+          pattern: '^[a-zA-Z\s]+$'
+        cardFullName:
+          type: string
+          maxLength: 31
+          pattern: '^[a-zA-Z\s]+$'
+        cardNumber:
+          type: string
+          pattern: '^\d{16}$'
+        cardExpireMonth:
+          type: integer
+          minimum: 1
+          maximum: 12
+        cardExpireYear:
+          type: integer
+          minimum: 2024
+        cardCVV:
+          type: string
+          pattern: '^\d{3}$'
+
+    CreateOrderRequest:
+      type: object
+      required:
+        - menuId
+        - deliveryLocation
+      properties:
+        menuId:
+          type: string
+          format: uuid
+          description: ID of menu to order
+        deliveryLocation:
+          $ref: '#/components/schemas/Location'
+
+    # Response schemas
+    AuthResponse:
+      type: object
+      properties:
+        userId:
+          type: string
+          format: uuid
+        accessToken:
+          type: string
+          description: JWT access token (7-day expiration)
+        refreshToken:
+          type: string
+          description: JWT refresh token (30-day expiration)
+        expiresIn:
+          type: integer
+          description: Access token expiration in seconds
+          example: 604800
+
+    TokenResponse:
+      type: object
+      properties:
+        accessToken:
+          type: string
+        expiresIn:
+          type: integer
+          example: 604800
+
+    User:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        email:
+          type: string
+          format: email
+        firstName:
+          type: string
+        lastName:
+          type: string
+        cardFullName:
+          type: string
+        cardNumber:
+          type: string
+          description: Masked card number (e.g., ****1234)
+        cardExpireMonth:
+          type: integer
+        cardExpireYear:
+          type: integer
+        cardCVV:
+          type: string
+          description: Masked CVV (e.g., ***)
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    MenuSummary:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        shortDescription:
+          type: string
+        price:
+          type: number
+          format: double
+          minimum: 0
+          description: Price in euros
+        deliveryTime:
+          type: integer
+          description: Estimated delivery time in minutes
+        imageUrl:
+          type: string
+          format: uri
+          description: URL to menu image
+        imageVersion:
+          type: integer
+          description: Image version number for caching
+        location:
+          $ref: '#/components/schemas/Location'
+
+    Menu:
+      allOf:
+        - $ref: '#/components/schemas/MenuSummary'
+        - type: object
+          properties:
+            longDescription:
+              type: string
+              description: Detailed menu description
+            createdAt:
+              type: string
+              format: date-time
+            updatedAt:
+              type: string
+              format: date-time
+
+    Ingredient:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        menuId:
+          type: string
+          format: uuid
+        name:
+          type: string
+        description:
+          type: string
+        origin:
+          type: string
+          description: Country or region of origin
+        bio:
+          type: boolean
+          description: Organic/biological certification
+
+    MenuImage:
+      type: object
+      properties:
+        image:
+          type: string
+          description: Base64-encoded image data (without data URI prefix)
+        version:
+          type: integer
+          description: Image version number
+
+    Order:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        userId:
+          type: string
+          format: uuid
+        menuId:
+          type: string
+          format: uuid
+        menuName:
+          type: string
+          description: Name of ordered menu
+        status:
+          type: string
+          enum:
+            - PENDING
+            - CONFIRMED
+            - PREPARING
+            - READY
+            - DELIVERING
+            - DELIVERED
+            - CANCELLED
+          description: Current order status
+        deliveryLocation:
+          $ref: '#/components/schemas/Location'
+        currentPosition:
+          allOf:
+            - $ref: '#/components/schemas/Location'
+            - nullable: true
+              description: Current drone position (null if not DELIVERING)
+        expectedDeliveryTime:
+          type: string
+          format: date-time
+          description: Estimated delivery time
+        actualDeliveryTime:
+          type: string
+          format: date-time
+          nullable: true
+          description: Actual delivery time (null until DELIVERED)
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    Location:
+      type: object
+      required:
+        - lat
+        - lng
+      properties:
+        lat:
+          type: number
+          format: double
+          minimum: -90
+          maximum: 90
+          description: Latitude
+        lng:
+          type: number
+          format: double
+          minimum: -180
+          maximum: 180
+          description: Longitude
+
+    Error:
+      type: object
+      properties:
+        status:
+          type: integer
+          description: HTTP status code
+        message:
+          type: string
+          description: Error message
+        timestamp:
+          type: string
+          format: date-time
+        path:
+          type: string
+          description: Request path
+        errors:
+          type: array
+          items:
+            type: string
+          description: Detailed validation errors (if applicable)
+
+  responses:
+    BadRequest:
+      description: Bad request - validation failed
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            status: 400
+            message: "Validation failed"
+            timestamp: "2026-02-19T10:30:00Z"
+            path: "/api/v1/auth/register"
+            errors:
+              - "cardNumber must be exactly 16 digits"
+              - "email must be a valid email address"
+
+    Unauthorized:
+      description: Unauthorized - authentication required or failed
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            status: 401
+            message: "Invalid credentials"
+            timestamp: "2026-02-19T10:30:00Z"
+            path: "/api/v1/auth/login"
+
+    PaymentRequired:
+      description: Payment required - invalid payment card
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            status: 402
+            message: "Invalid payment card"
+            timestamp: "2026-02-19T10:30:00Z"
+            path: "/api/v1/orders"
+
+    Forbidden:
+      description: Forbidden - insufficient permissions
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            status: 403
+            message: "Access denied"
+            timestamp: "2026-02-19T10:30:00Z"
+            path: "/api/v1/orders/123"
+
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            status: 404
+            message: "Menu not found"
+            timestamp: "2026-02-19T10:30:00Z"
+            path: "/api/v1/menus/999"
+
+    Conflict:
+      description: Conflict - resource already exists or business rule violation
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            status: 409
+            message: "Active order already exists"
+            timestamp: "2026-02-19T10:30:00Z"
+            path: "/api/v1/orders"
