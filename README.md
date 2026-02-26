@@ -1,51 +1,14 @@
+# Fast Eat - Architecture & API Specification
+
 <div align="center">
-  <img width="2000" height="516" alt="Image" src="https://github.com/user-attachments/assets/06b824b2-0437-4f83-89b9-bf7ab3d69bac" />
-  <h1>Fast Eat</h1>
-  <p><i>Architecture & API Specification</i></p>
+  <img style="max-width: 100%; max-height: 150px;" alt="Fast Eat Logo" src="https://github.com/user-attachments/assets/06b824b2-0437-4f83-89b9-bf7ab3d69bac" />
 </div>
 
 ---
 
 Fast Eat is a food ordering platform with live drone delivery tracking. Originally developed as a university project with a professor-provided backend API, this repository documents the reimplementation of that closed API using enterprise-grade Spring Boot.
 
-**Quick Navigation:** [Spring Boot Backend](https://github.com/gerolori/fast-eat-backend-springboot) • [React Native App](https://github.com/gerolori/fast-eat-react-native) • [Kotlin Android App](https://github.com/gerolori/fast-eat-kotlin) • [Architecture](https://github.com/gerolori/fast-eat-architecture) • [API Spec](api/openapi.yaml)
-
----
-
-### Apps Showcase
-
-WIP
-
-<!-- <table>
-  <tr>
-    <td align="center">
-      <img src="assets/screenshots/menu-list.png" alt="Menu List" width="220"/><br/>
-      <sub>Menu Browsing</sub>
-    </td>
-    <td align="center">
-      <img src="assets/screenshots/menu-detail.png" alt="Menu Detail" width="220"/><br/>
-      <sub>Menu Details</sub>
-    </td>
-    <td align="center">
-      <img src="assets/screenshots/order-tracking.png" alt="Order Tracking" width="220"/><br/>
-      <sub>Live Tracking</sub>
-    </td>
-  </tr>
-  <tr>
-    <td align="center">
-      <img src="assets/screenshots/profile.png" alt="Profile" width="220"/><br/>
-      <sub>User Profile</sub>
-    </td>
-    <td align="center">
-      <img src="assets/screenshots/onboarding.png" alt="Onboarding" width="220"/><br/>
-      <sub>Onboarding</sub>
-    </td>
-    <td align="center">
-      <img src="assets/screenshots/swagger.png" alt="API Docs" width="220"/><br/>
-      <sub>Swagger Docs</sub>
-    </td>
-  </tr>
-</table> -->
+**Quick Navigation:** [Architecture & API Spec](https://github.com/gerolori/fast-eat-architecture) • [Spring Boot Backend](https://github.com/gerolori/fast-eat-backend-springboot) • [Kotlin Android App](https://github.com/gerolori/fast-eat-kotlin) • [React Native App](https://github.com/gerolori/fast-eat-react-native)
 
 ---
 
@@ -73,9 +36,37 @@ WIP
   - [Endpoints Overview](#endpoints-overview)
   - [Key Features](#key-features)
   - [Viewing the API Documentation](#viewing-the-api-documentation)
-- [Connection to Thesis Work](#connection-to-thesis-work)
-  - [Shared Architectural Patterns](#shared-architectural-patterns)
-  - [Technology Continuity](#technology-continuity)
+  - [Data Models](#data-models)
+    - [User](#user)
+    - [Menu](#menu)
+    - [Ingredient](#ingredient)
+    - [Order](#order)
+    - [Order Status Flow](#order-status-flow)
+  - [Validation Requirements](#validation-requirements)
+    - [Field-Level Validation](#field-level-validation)
+    - [Business Rule Validation](#business-rule-validation)
+    - [Test Card Numbers](#test-card-numbers)
+  - [Error Handling Standards](#error-handling-standards)
+    - [Exception Types](#exception-types)
+    - [Error Response Format](#error-response-format)
+  - [Security Architecture](#security-architecture)
+    - [Authentication Strategy](#authentication-strategy)
+    - [Password Security](#password-security)
+    - [Authorization](#authorization)
+    - [CORS Configuration](#cors-configuration)
+    - [Input Sanitization](#input-sanitization)
+  - [Testing Requirements](#testing-requirements)
+    - [Coverage Goals](#coverage-goals)
+    - [Unit Testing Focus](#unit-testing-focus)
+    - [Integration Testing Focus](#integration-testing-focus)
+    - [Critical Test Scenarios](#critical-test-scenarios)
+  - [Docker \& DevOps Best Practices](#docker--devops-best-practices)
+    - [Multi-Stage Builds](#multi-stage-builds)
+    - [Health Checks](#health-checks)
+    - [Environment Configuration](#environment-configuration)
+    - [Container Security](#container-security)
+    - [Data Persistence](#data-persistence)
+    - [Seed Data](#seed-data)
 - [Future Backend Implementations](#future-backend-implementations)
   - [NestJS (TypeScript)](#nestjs-typescript)
   - [FastAPI (Python + MongoDB)](#fastapi-python--mongodb)
@@ -244,35 +235,368 @@ The complete API contract is defined in OpenAPI 3.0.3 format:
 1. Copy the content of [api/openapi.yaml](api/openapi.yaml)
 2. Paste into [Swagger Editor](https://editor.swagger.io)
 
----
+### Data Models
 
-## Connection to Thesis Work
+This section describes the core entities in the Fast Eat system. All implementations must support these data structures.
 
-This project applies patterns and technologies from my thesis project, a Human Resources Management system built with Spring Boot for enterprise HR workflows.
+#### User
 
-### Shared Architectural Patterns
+Represents a registered user with profile and payment information.
 
-| Pattern                            | Thesis                        | This Project (Fast Eat)       |
-| ---------------------------------- | ----------------------------- | ----------------------------- |
-| Architecture Style                 | Multi-module Maven monolith   | Multi-module Maven monolith   |
-| Layer Organization                 | trigger/handler/repository    | trigger/handler/repository    |
-| Domain Design                      | Contact, Employee, Application| User, Menu, Order             |
-| Security                           | Custom @Admin, @HR annotations| Custom @Customer, @Admin      |
-| Event Processing                   | ApplicationEventPublisher     | ApplicationEventPublisher     |
-| DTO Pattern                        | Java Records (nested)         | Java Records (nested)         |
-| Error Handling                     | @ControllerAdvice centralized | @ControllerAdvice centralized |
-| Async Operations                   | @Scheduled cron tasks         | @Scheduled status updates     |
-| Docker Strategy                    | Multi-stage builds            | Multi-stage builds            |
-| Configuration Management           | Profile-based (local/docker)  | Profile-based (local/docker)  |
+**Fields:**
 
-### Technology Continuity
+- `id` - Unique identifier (UUID or Long)
+- `email` - User's email address (unique, validated)
+- `password` - User's password (hashed, never exposed in responses)
+- `firstName` - User's first name (max 15 characters, letters and spaces)
+- `lastName` - User's last name (max 15 characters, letters and spaces)
+- `cardFullName` - Full name as appears on credit card (max 31 characters)
+- `cardNumber` - 16-digit credit card number
+- `cardExpireMonth` - Card expiration month (1-12)
+- `cardExpireYear` - Card expiration year (4 digits)
+- `cardCVV` - 3-digit security code
+- `createdAt` - Account creation timestamp
+- `updatedAt` - Last update timestamp
 
-- Spring Boot 3.2+ with Java 17 (LTS)
-- Spring Data JPA with PostgreSQL (relational data modeling)
-- Spring Security with JWT authentication
-- SpringDoc OpenAPI for automatic API documentation
-- Docker containerization with health checks
-- JUnit 5 + Mockito for testing
+#### Menu
+
+Represents a food menu offered by a restaurant.
+
+**Fields:**
+
+- `id` - Unique identifier
+- `name` - Menu name
+- `shortDescription` - Brief description for list views
+- `longDescription` - Detailed description for detail views
+- `price` - Menu price (2 decimal places)
+- `deliveryTime` - Estimated delivery time in minutes
+- `imageUrl` - Reference to menu image
+- `imageVersion` - Version number for cache invalidation
+- `restaurantLocation` - Geographic coordinates of restaurant (latitude, longitude)
+- `createdAt` - Creation timestamp
+- `updatedAt` - Last update timestamp
+
+#### Ingredient
+
+Represents an ingredient in a menu.
+
+**Fields:**
+
+- `id` - Unique identifier
+- `menuId` - Foreign key to Menu
+- `name` - Ingredient name
+- `description` - Ingredient description
+- `origin` - Country or region of origin
+- `bio` - Boolean indicating organic/biological status
+
+#### Order
+
+Represents a customer order with delivery tracking.
+
+**Fields:**
+
+- `id` - Unique identifier
+- `userId` - Foreign key to User
+- `menuId` - Foreign key to Menu
+- `status` - Order status (see Order Status Flow below)
+- `deliveryLocation` - Customer delivery coordinates (latitude, longitude)
+- `currentPosition` - Live drone position (latitude, longitude)
+- `expectedDeliveryTime` - Expected delivery timestamp
+- `actualDeliveryTime` - Actual delivery timestamp (null until delivered)
+- `createdAt` - Order placement timestamp
+- `updatedAt` - Last update timestamp
+
+#### Order Status Flow
+
+Orders follow a defined state machine with the following valid transitions:
+
+```
+PENDING → CONFIRMED → PREPARING → READY → DELIVERING → DELIVERED
+```
+
+**Status Descriptions:**
+
+- **PENDING** - Order created, awaiting restaurant confirmation
+- **CONFIRMED** - Restaurant accepted, payment processed
+- **PREPARING** - Food is being prepared
+- **READY** - Ready for pickup by delivery drone
+- **DELIVERING** - In transit to customer (currentPosition updates in real-time)
+- **DELIVERED** - Successfully delivered to customer
+
+**Business Rules:**
+
+- Only forward transitions are allowed (cannot go from DELIVERED back to PENDING)
+- Status updates trigger events for notifications
+- The `currentPosition` field is only updated when status is DELIVERING
+
+### Validation Requirements
+
+All implementations must enforce the following validation rules:
+
+#### Field-Level Validation
+
+| Field                | Validation Rules                               |
+| -------------------- | ---------------------------------------------- |
+| **Email**                | Valid email format (RFC 5322 compliant)        |
+| **Password**             | Minimum 8 characters                           |
+| **First Name**           | Maximum 15 characters, letters and spaces only |
+| **Last Name**            | Maximum 15 characters, letters and spaces only |
+| **Card Full Name**       | Maximum 31 characters, letters and spaces only |
+| **Card Number**          | Exactly 16 digits                              |
+| **Card CVV**             | Exactly 3 digits                               |
+| **Card Expiry Month**    | Integer between 1 and 12                       |
+| **Card Expiry Year**     | 4-digit year, must be >= current year          |
+| **Delivery Coordinates** | Latitude: -90 to 90, Longitude: -180 to 180    |
+
+#### Business Rule Validation
+
+- **Unique Email:** No two users can have the same email address
+- **Complete Profile:** Users must complete all profile fields before placing an order
+- **Single Active Order:** Users can only have one active order at a time (status not DELIVERED)
+- **Menu Availability:** Menu must exist and be available at the delivery location
+- **Valid Payment Card:** Card expiration date must be in the future
+
+#### Test Card Numbers
+
+For testing purposes, any card number starting with the digit `1` is considered valid by the system.
+
+### Error Handling Standards
+
+All implementations must return standardized error responses.
+
+#### Exception Types
+
+| Exception            | HTTP Status | Description                                                                       |
+| -------------------- | ----------- | --------------------------------------------------------------------------------- |
+| **NotFoundError**        | 404         | Requested resource does not exist                                                 |
+| **ValidationError**      | 400         | Input validation failed                                                           |
+| **ConflictError**        | 409         | Request conflicts with current state (e.g., duplicate email, active order exists) |
+| **PaymentRequiredError** | 402         | Payment validation failed                                                         |
+| **UnauthorizedError**    | 401         | Authentication required or failed                                                 |
+| **ForbiddenError**       | 403         | User lacks permission to access resource                                          |
+
+#### Error Response Format
+
+All error responses must follow this JSON structure:
+
+```json
+{
+  "status": 400,
+  "message": "Validation failed",
+  "timestamp": "2026-02-23T10:30:00Z",
+  "path": "/api/v1/orders",
+  "errors": [
+    {
+      "field": "cardNumber",
+      "message": "Card number must be exactly 16 digits"
+    }
+  ]
+}
+```
+
+**Required Fields:**
+
+- `status` - HTTP status code
+- `message` - Human-readable error summary
+- `timestamp` - ISO 8601 formatted timestamp
+- `path` - API endpoint that generated the error
+- `errors` - Array of field-level errors (optional, for validation errors)
+
+**Field Error Object:**
+
+- `field` - Name of the field that failed validation
+- `message` - Specific error message for this field
+
+### Security Architecture
+
+#### Authentication Strategy
+
+Fast Eat uses JWT (JSON Web Token) based authentication for stateless, scalable authentication.
+
+**Token Types:**
+
+- **Access Token** - 7-day expiration, included in Authorization header for API requests
+- **Refresh Token** - 30-day expiration, used to obtain new access tokens
+
+**Authentication Flow:**
+
+1. User registers or logs in
+2. Server returns access token and refresh token
+3. Client includes access token in `Authorization: Bearer {token}` header
+4. When access token expires, client uses refresh token to obtain new tokens
+
+#### Password Security
+
+- Passwords must be hashed using BCrypt algorithm
+- Passwords must never be returned in API responses
+- Minimum password length: 8 characters
+- Password strength validation recommended but not required
+
+#### Authorization
+
+**Role-Based Access Control (RBAC):**
+
+- **Customer** - Standard user role, can browse menus and place orders
+- **Admin** - Administrative role (future use for restaurant management)
+
+**Protected Endpoints:**
+
+- All endpoints except `/auth/register`, `/auth/login`, and `/auth/refresh` require authentication
+- Some endpoints may require specific roles (e.g., admin endpoints)
+
+#### CORS Configuration
+
+- Implementations should whitelist allowed origins (mobile client URLs)
+- Support for credentials should be enabled for cookie-based features (if any)
+- Configuration should be environment-specific (development vs. production)
+
+#### Input Sanitization
+
+All implementations must sanitize input to prevent:
+
+- SQL injection attacks
+- NoSQL injection attacks
+- Cross-site scripting (XSS)
+- Command injection
+
+### Testing Requirements
+
+All implementations must meet the following testing standards.
+
+#### Coverage Goals
+
+| Layer              | Minimum Coverage | Critical Paths                          |
+| ------------------ | ---------------- | --------------------------------------- |
+| **Overall**            | 70%              | -                                       |
+| **Authentication**     | 100%             | User registration, login, token refresh |
+| **Order Processing**   | 100%             | Order creation, status transitions      |
+| **Payment Validation** | 100%             | Card validation, business rules         |
+| **API Endpoints**      | 80%              | All controller/route handlers           |
+| **Business Logic**     | 85%              | All service layer logic                 |
+
+#### Unit Testing Focus
+
+Unit tests should cover:
+
+- Business logic validation
+- Card number format validation
+- Email format validation
+- Order status state machine transitions
+- JWT token generation and validation
+- Utility functions and helpers
+
+#### Integration Testing Focus
+
+Integration tests should cover:
+
+- Complete API endpoint request/response cycles
+- Database operations (create, read, update, delete)
+- Authentication flows (register → login → refresh)
+- Complete order placement workflow
+- Error handling and edge cases
+- Database transaction rollback scenarios
+
+#### Critical Test Scenarios
+
+The following scenarios must have 100% test coverage:
+
+1. **User Registration with Invalid Data**
+   - Invalid email format
+   - Duplicate email
+   - Invalid card number format
+   - Card expiration in the past
+
+2. **Order Placement Business Rules**
+   - Incomplete user profile
+   - Active order already exists
+   - Invalid menu ID
+   - Invalid delivery coordinates
+
+3. **Authentication Edge Cases**
+   - Expired access token
+   - Invalid refresh token
+   - Malformed JWT token
+   - Missing Authorization header
+
+### Docker & DevOps Best Practices
+
+All backend implementations should follow these containerization practices.
+
+#### Multi-Stage Builds
+
+Use multi-stage Docker builds to minimize final image size:
+
+**Benefits:**
+
+- 60-70% smaller final image size compared to single-stage builds
+- Only runtime dependencies included in final image
+- Faster deployment and reduced attack surface
+- Efficient layer caching for faster rebuilds
+
+**Pattern:**
+
+1. **Build Stage** - Install build tools, compile/build application
+2. **Runtime Stage** - Copy only compiled artifacts and runtime dependencies
+
+#### Health Checks
+
+Implement health check endpoints for container orchestration:
+
+**Health Check Pattern:**
+
+- Endpoint: `GET /api/v1/health` or `/health`
+- Response: `200 OK` with optional health status details
+- Should verify database connectivity
+- Should verify critical dependencies (Redis, external APIs, etc.)
+
+**Docker Health Check Configuration:**
+
+- Interval: 30 seconds
+- Timeout: 10 seconds
+- Retries: 3
+- Start period: 40 seconds (allows application startup time)
+
+#### Environment Configuration
+
+Use environment-based configuration profiles:
+
+| Profile    | Purpose               | Database                   | Use Case           |
+| ---------- | --------------------- | -------------------------- | ------------------ |
+| **local**      | Local development     | Local database instance    | IDE debugging      |
+| **docker**     | Container development | Containerized database     | Full stack testing |
+| **test**       | Test environment      | In-memory or test database | CI/CD pipelines    |
+| **production** | Production deployment | Cloud-managed database     | Live deployment    |
+
+#### Container Security
+
+- Run containers as non-root user
+- Use minimal base images (alpine variants)
+- Scan images for vulnerabilities
+- Keep base images updated
+- Never include secrets in images (use environment variables)
+
+#### Data Persistence
+
+- Use named volumes for database data persistence
+- Separate volumes for different services (database, redis, etc.)
+- Configure volume drivers appropriate for environment
+- Implement backup strategies for production data
+
+#### Seed Data
+
+**Development/Showcase Environment:**
+
+- Pre-populate with realistic test data
+- Include sample restaurants (5-10) with Milan-area locations
+- Include diverse menus (20+) with ingredients
+- Include test user accounts
+- Use realistic coordinates (Milan: 45.4642° N, 9.1900° E region)
+
+**Production Environment:**
+
+- Empty database on initialization
+- All data populated via API only
+- Migration scripts for schema only
 
 ---
 
